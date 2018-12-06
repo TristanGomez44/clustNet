@@ -269,6 +269,8 @@ def accuracyEvolution(args):
     #These arrays will store the total variation (TV) of each curve
     tvAcc,tvNoDet,tvDet,tvClu = [np.zeros((len(scorFiles))) for i in range(4)]
 
+    labelList = []
+
     for i in range(len(scorFiles)):
         print("Net ",i)
 
@@ -289,7 +291,7 @@ def accuracyEvolution(args):
                 nodet[i,j],det[i,j] = computeClusAcc(clusters,fullTarget,int(paramDict['seed']),int(paramDict['clust']),args.exp_id,i,j,full_clust=False)
 
         label = ''.join((str(param)+"="+str(paramDict[param])+",") for param in args.acc_evol)
-
+        labelList.append(label)
         #Ploting the curves and computing the total variation
         handlesAcc += ax1.plot(acc[i,:], label=label,color=colors[i],dashes = [6,2])
         tvAcc[i] = np.abs(acc[i,:-1]-acc[i,1:]).sum()
@@ -320,13 +322,13 @@ def accuracyEvolution(args):
     ax1.set_ylim([0, 1])
 
     #Adding the legend
-    legAcc = plotSco.legend(handles=handlesAcc, loc='upper right' ,title="Accuracy")
+    legAcc = plotSco.legend(labels=labelList,handles=handlesAcc, loc='upper right' ,title="Accuracy")
 
     if paramDict['full_clust'] == "True" or args.full_clust:
-        legAccClu = plotSco.legend(handles=handlesAccClu, loc='center right' ,title="Clustering")
+        legAccClu = plotSco.legend(labels=labelList,handles=handlesAccClu, loc='center right' ,title="Clustering")
     else:
-        legAccCluNoDe = plotSco.legend(handles=handlesAccNoDe, loc='center right' ,title="Clustering No det")
-        legAccCluDe = plotSco.legend(handles=handlesAccDe, loc='lower right' ,title="Clustering det")
+        legAccCluNoDe = plotSco.legend(labels=labelList,handles=handlesAccNoDe, loc='center right' ,title="Clustering No det")
+        legAccCluDe = plotSco.legend(labels=labelList,handles=handlesAccDe, loc='lower right' ,title="Clustering det")
 
     legTV = plotTV.legend(handlesTV,TVkeys, loc='upper right' ,title="Total variation")
 
@@ -779,7 +781,7 @@ def computeClusAcc(clusters,fullTarget,seed,clusterNb,exp_id,i,j,full_clust=Fals
     classes = list(np.arange(10))
     np.random.shuffle(classes)
     classToFind =  classes[0: clusterNb]
-    confMat = mnist.computeConfMat(clustPred,fullTarget, heatmapFileName=None,classToFind = classToFind)
+    confMat = trainVal.computeConfMat(clustPred,fullTarget, heatmapFileName=None,classToFind = classToFind,exp_id=exp_id,nbClusts=clusterNb)
 
     #print(confMat)
 
