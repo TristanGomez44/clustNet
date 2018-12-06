@@ -282,7 +282,7 @@ def train(clustDetectNet,optimizerCl, optimizerDe,train_loader, epoch, args,clas
     torch.save(clustDetectNet.state_dict(), "../nets/{}/clustDetectNet{}_epoch{}".format(args.exp_id,args.ind_id, epoch))
 
     #Computing confusion matrix
-    conf_mat = computeConfMat(all_clust,all_targ,args.exp_id,classToFind,"clustDetectNet"+str(args.ind_id)+"_epoch"+str(epoch)+"_train.png")
+    conf_mat = computeConfMat(all_clust,all_targ,args.exp_id,classToFind,args.clust,"clustDetectNet"+str(args.ind_id)+"_epoch"+str(epoch)+"_train.png")
 
 
 def jointTrain(clustDetectNet,args,train_loader,epoch,batch_idx,data,origTarget,target,optimizerDe,optimizerCl,correct,firstTrainBatch):
@@ -584,7 +584,7 @@ def test(clustDetectNet,test_loader,epoch, args,classToFind):
         100. * correct / len(test_loader.dataset)))
 
     #Computing confusion matrix
-    conf_mat = computeConfMat(all_clust,all_targ,args.exp_id,classToFind,"clustDetectNet"+str(args.ind_id)+"_epoch"+str(epoch)+"_test.png")
+    conf_mat = computeConfMat(all_clust,all_targ,args.exp_id,classToFind,args.clust,"clustDetectNet"+str(args.ind_id)+"_epoch"+str(epoch)+"_test.png")
 
 def masked_index(input, dim, mask):
     '''Select elements of a pytorch array using a boolean mask
@@ -624,7 +624,7 @@ def merge(target,reverse_target=False,listLabels = [0,1,2,3,4]):
 
     return torch.LongTensor(newTarg)
 
-def computeConfMat(all_clust,all_targ, exp_id,classToFind,heatmapFileName=None):
+def computeConfMat(all_clust,all_targ, exp_id,classToFind,nbClusts,heatmapFileName=None):
 
     '''Compute a rectangular confusion matrix.
 
@@ -640,11 +640,12 @@ def computeConfMat(all_clust,all_targ, exp_id,classToFind,heatmapFileName=None):
         heatmapFileName (str): the name of the heatmap file. If none, the file won't be created
         exp_id (str): the name of the experiment
         classToFind (list): the list of class index defining the positive class.
+        nbClusts (int): the total number of clusters
     Returns: a rectangular confusion matrix indicating the proportion of each target class assigned to each clusters
     '''
 
     #print(all_targ)
-    allClasses = list(set(list(all_targ)))
+    nbClasses = len(list(set(list(all_targ))))
 
     #Indicates which class is asigned to each column of the matrix
     #The first classes in the dict are the classes to detect
@@ -662,12 +663,13 @@ def computeConfMat(all_clust,all_targ, exp_id,classToFind,heatmapFileName=None):
         reversClassDic.update({i:classNotToFind[i-len(classToFind)]})
 
     #Computing the matrix
-    mat = np.zeros((len(classToFind),len(allClasses)))
+    mat = np.zeros((nbClusts,nbClasses))
 
     for i in range(len(all_targ)):
         try:
             mat[all_clust[i],classDic[all_targ[i]]] += 1
         except IndexError:
+            print("Index error")
             print(mat.shape)
             print(all_clust[i],classDic[all_targ[i]])
             sys.exit(0)
@@ -678,7 +680,7 @@ def computeConfMat(all_clust,all_targ, exp_id,classToFind,heatmapFileName=None):
         #Plotting the heat map
         heatmap = plt.figure()
         ax1 = heatmap.add_subplot(111)
-        plt.xticks(np.arange(len(allClasses)),[reversClassDic[i] for i in range(len(allClasses))])
+        plt.xticks(np.arange(nbClasses),[reversClassDic[i] for i in range(nbClasses)])
         plt.imshow(mat, cmap='gray', interpolation='nearest')
         plt.savefig('../vis/'+str(exp_id)+"/"+heatmapFileName)
 
