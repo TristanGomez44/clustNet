@@ -31,8 +31,6 @@ import trainVal
 from sklearn.manifold import TSNE
 import netBuilder
 
-#Main functions
-
 def weigthTrajectoryLength(args):
 
     weigthTrajectoryLength(args)
@@ -224,9 +222,9 @@ def accuracyEvolution(args):
 
     #Get and sort the experiment file
     if args.train:
-        scorFiles = sortExperiFiles("../results/"+args.exp_id+"/*epoch*_train.csv",netNumber)
+        scorFiles = sortExperiFiles("../results/"+args.exp_id+"/*epoch*_train.csv",netNumber,args.nets_to_remove)
     else:
-        scorFiles = sortExperiFiles("../results/"+args.exp_id+"/*epoch*[0-9].csv",netNumber)
+        scorFiles = sortExperiFiles("../results/"+args.exp_id+"/*epoch*[0-9].csv",netNumber,args.nets_to_remove)
 
     try:
 
@@ -322,13 +320,13 @@ def accuracyEvolution(args):
     ax1.set_ylim([0, 1])
 
     #Adding the legend
-    legAcc = plotSco.legend(labels=labelList,handles=handlesAcc, loc='upper right' ,title="Accuracy")
+    legAcc = plotSco.legend(labels=labelList,handles=handlesAcc, loc='upper right' ,title="Accuracy",prop={'size': 6})
 
     if paramDict['full_clust'] == "True" or args.full_clust:
-        legAccClu = plotSco.legend(labels=labelList,handles=handlesAccClu, loc='center right' ,title="Clustering")
+        legAccClu = plotSco.legend(labels=labelList,handles=handlesAccClu, loc='center right' ,title="Clustering",prop={'size': 6})
     else:
-        legAccCluNoDe = plotSco.legend(labels=labelList,handles=handlesAccNoDe, loc='center right' ,title="Clustering No det")
-        legAccCluDe = plotSco.legend(labels=labelList,handles=handlesAccDe, loc='lower right' ,title="Clustering det")
+        legAccCluNoDe = plotSco.legend(labels=labelList,handles=handlesAccNoDe, loc='center right' ,title="Negative class clustering",prop={'size': 6})
+        legAccCluDe = plotSco.legend(labels=labelList,handles=handlesAccDe, loc='lower right' ,title="Positive class clustering",prop={'size': 6})
 
     legTV = plotTV.legend(handlesTV,TVkeys, loc='upper right' ,title="Total variation")
 
@@ -358,6 +356,13 @@ def accuracyEvolution(args):
         plt.savefig('../vis/{}/tv_train.pdf'.format(args.exp_id))
     else:
         plt.savefig('../vis/{}/tv_test.pdf'.format(args.exp_id))
+
+def removeNets(scorFiles,netIdsToTemove):
+
+    for netId in netIdsToTemove:
+        scorFiles = list(filter(lambda x: x.find("net{}_".format(netId)) == -1,scorFiles))
+
+    return scorFiles
 
 def failuresCases(args):
 
@@ -586,8 +591,7 @@ def hiddenRepTSNE(args):
     repre_emb = TSNE(n_components=2,init='pca',learning_rate=20).fit_transform(repre)
     plotEmb(repre_emb,target,"../vis/{}/{}_tsne_raw.png".format(args.exp_id,args.ind_id),colors)
 
-
-def sortExperiFiles(regex,netNumber):
+def sortExperiFiles(regex,netNumber,netsToRemove):
     '''Sort files on their net id and after on their epoch number
 
     Can sort results files (csv files in the \'results\' folder) or weight files (in the \'nets\' folder)
@@ -595,13 +599,17 @@ def sortExperiFiles(regex,netNumber):
     Args:
         regex (string): the regex indicating which files has to be sorted.
             Example : \'../nets/clustNet_capacity/clustDetectNet*_epoch*\' will match will a the weight files from the experience \'clustNet_capacity\'.
-        netNumber (int): the number of networks in the experiment
+        netNumber (int): the total number of networks in the experiment
+        netsToRemove (list): the list of net id not to plot
     Returns:
         (numpy.ndarray): the files sorted in a 2D array. The rows corresponds to nets ID and columns corresponds to epoch number
     '''
 
     #Getting the weight of all the net at all the epochs
     files = glob.glob(regex)
+
+    #Remove the nets not to plot
+    files = removeNets(files,netsToRemove)
 
     #Sorting files depending on which net they correspond
     files = sorted(files,key=findFirstNumber)
@@ -613,7 +621,7 @@ def sortExperiFiles(regex,netNumber):
         if len(files[i])> maxLen:
             maxLen = len(files[i])
     #Separating the files corresponding to each net
-    files = np.array(files,dtype='S{}'.format(maxLen)).reshape((netNumber,-1))
+    files = np.array(files,dtype='S{}'.format(maxLen)).reshape((netNumber-len(netsToRemove),-1))
 
     #Sorting every line of the array depending on the epoch number
     kwargs = {'key': findNumbers}
@@ -622,7 +630,7 @@ def sortExperiFiles(regex,netNumber):
     return files
 
 def findNumbers(x):
-    '''Extracts the number of a string and returns them as an integer'''
+    '''Extracts the numbers of a string and returns them as an integer'''
 
     return int((''.join(xi for xi in str(x) if xi.isdigit())))
 
@@ -762,7 +770,7 @@ def computeAcc(output,binaryTarget):
 
     output = torch.tensor(output)
     binaryTarget = torch.LongTensor(binaryTarget)
-    pred = torch.tensor(output).data.max(1, keepdim=True)[1]
+    pred = output.data.max(1, keepdim=True)[1]
     correct = pred.eq(binaryTarget.data.view_as(pred)).long().cpu().sum()
     return float(correct)/len(binaryTarget)
 
@@ -855,8 +863,10 @@ def main(argv=None):
     argreader.parser.add_argument('--acc_evol', nargs='+',type=str, metavar='SCOR',
                         help='Plot the error, accuracy and clustering score across the training epochs for all nets in the experiment. Also plot \
                         the total variation of these curves. The values after "--acc_evol" is the list of parameters which are varying among the \
-                        different nets. The score file must contain the targets, the prediction and cluster scores. The score file name should be \
-                        like "all_scores_net5_epoch3.csv"')
+                        different nets. Some nets can be not plotted using the --nets_to_remove arg.')
+
+    argreader.parser.add_argument('--nets_to_remove', nargs='+',default=[],type=int, metavar='ID',
+                        help='The list of net IDs not to plot when using the --acc_evol arg.')
 
     argreader.parser.add_argument('--failurecases',type=int, nargs=2,metavar='SCOR',
                         help='To write in a folder the test images that are misclassified by the nets at every epoch. '\
