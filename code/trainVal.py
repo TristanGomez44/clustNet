@@ -42,6 +42,8 @@ class GradNoise():
         gradNorm = torch.sqrt(torch.pow(grad,2).sum()).item()
         noise =self.ampl*gradNorm*self.noise
 
+        #print(gradNorm,torch.sqrt(torch.pow(noise,2).sum()),torch.sqrt(torch.pow(noise,2).sum())/gradNorm)
+
         if grad.is_cuda:
             return grad + torch.tensor(noise).cuda().type("torch.cuda.FloatTensor")
         else:
@@ -73,7 +75,6 @@ def trainCAE(cae,optimizerCAE,train_loader, epoch, args):
         flattData = data[:,0].view(data.size(0),-1)
 
         output = cae(data)
-
 
         loss = F.mse_loss(output, data)
 
@@ -303,7 +304,7 @@ def jointTrain(clustDetectNet,args,train_loader,epoch,batch_idx,data,origTarget,
     loss = F.nll_loss(output, target)
 
     #Add some terms to the loss function to change the behavior of the net during training
-    loss = addLossTerms(loss,args.clust,args.denblayers,args.harddecision,args.entweig,args.filter_dis,args.clustdivers,args.featmap_entr,args.featmap_var)
+    loss = addLossTerms(cluDis,loss,args.clust,args.denblayers,args.harddecision,args.entweig,args.filter_dis,args.clustdivers,args.featmap_entr,args.featmap_var)
 
     loss.backward()
     #print(loss.grad)
@@ -463,7 +464,7 @@ def separatedTrain(clustDetectNet,args,train_loader,epoch,batch_idx,data,origTar
             100. * batch_idx / len(train_loader), loss.data.item()))
 
     return all_targ,all_clust
-def addLossTerms(loss,clust,denblayers,harddecision,entweig,filter_dis,clustdivers,featmap_entr,featmap_var):
+def addLossTerms(cluDis,loss,clust,denblayers,harddecision,entweig,filter_dis,clustdivers,featmap_entr,featmap_var):
 
     if not harddecision and entweig != 0 :
         loss += entweig * (-cluDis*torch.log(cluDis)).mean()
@@ -945,6 +946,7 @@ def main(argv=None):
 
     #Write the arguments in a config file so the experiment can be re-run
     argreader.writeConfigFile("../nets/{}/{}{}.ini".format(args.exp_id,netType,args.ind_id))
+
 
     #Building the net
     net = netBuilder.netMaker(args)
