@@ -345,17 +345,17 @@ def accuracyEvolution(args):
     plt.grid()
     plt.xlabel('Epoch')
     if args.train:
-        plt.savefig('../vis/{}/{}_trainError.pdf'.format(args.exp_id,args.exp_id))
+        plt.savefig('../vis/{}/{}_trainError.png'.format(args.exp_id,args.exp_id))
     else:
-        plt.savefig('../vis/{}/{}_testError.pdf'.format(args.exp_id,args.exp_id))
+        plt.savefig('../vis/{}/{}_testError.png'.format(args.exp_id,args.exp_id))
 
     plt.figure(3)
     plt.grid()
     plt.xlabel('Net')
     if args.train:
-        plt.savefig('../vis/{}/tv_train.pdf'.format(args.exp_id))
+        plt.savefig('../vis/{}/tv_train.png'.format(args.exp_id))
     else:
-        plt.savefig('../vis/{}/tv_test.pdf'.format(args.exp_id))
+        plt.savefig('../vis/{}/tv_test.png'.format(args.exp_id))
 
 def removeNets(scorFiles,netIdsToTemove):
 
