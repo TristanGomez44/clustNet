@@ -65,6 +65,17 @@ Below, a model with batch size 4 and learning rate 0.01 is trained several times
 
 ### CIFAR10
 
+Here I first vary the batch size and the learning rate, as in the previous experiment on MNIST. In the figure below, you can see that with small batch size, the CN yields a performance that is much better than random.
+
+<figure>
+  <img src="/readmeFiles/linDet_cifar_testError.png" width="100%">
+  <figcaption style="
+    margin: 10px 0 0 0;
+    font-weight: bold;
+    text-align: center;"> Performance of several models on CIFAR10. Each color represents a model with its own batch size and learning rate value. Dashed, straight and dotted lines
+                          represents binary accuracy (class P or N), positive clustering accuracy (class 0,1,2,3 or 4) and negative clustering accuracy (5,6,7,8 or 9). One can see that the models with the smaller batch size yield a good performance. </figcaption>
+</figure>
+
 
 
 ## Installation
