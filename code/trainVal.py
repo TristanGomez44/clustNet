@@ -42,8 +42,6 @@ class GradNoise():
         gradNorm = torch.sqrt(torch.pow(grad,2).sum()).item()
         noise =self.ampl*gradNorm*self.noise
 
-        #print(gradNorm,torch.sqrt(torch.pow(noise,2).sum()),torch.sqrt(torch.pow(noise,2).sum())/gradNorm)
-
         if grad.is_cuda:
             return grad + torch.tensor(noise).cuda().type("torch.cuda.FloatTensor")
         else:
@@ -75,6 +73,7 @@ def trainCAE(cae,optimizerCAE,train_loader, epoch, args):
         flattData = data[:,0].view(data.size(0),-1)
 
         output = cae(data)
+
 
         loss = F.mse_loss(output, data)
 

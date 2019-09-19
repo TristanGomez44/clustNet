@@ -770,7 +770,7 @@ def computeAcc(output,binaryTarget):
 
     output = torch.tensor(output)
     binaryTarget = torch.LongTensor(binaryTarget)
-    pred = output.data.max(1, keepdim=True)[1]
+    pred = torch.tensor(output).data.max(1, keepdim=True)[1]
     correct = pred.eq(binaryTarget.data.view_as(pred)).long().cpu().sum()
     return float(correct)/len(binaryTarget)
 
