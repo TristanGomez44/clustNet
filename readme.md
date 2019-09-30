@@ -78,6 +78,15 @@ Here I first vary the batch size and the learning rate, as in the previous exper
 
 
 
+<figure>
+  <img src="/readmeFiles/linDet2_cifar_testError.png" width="100%">
+  <figcaption style="
+    margin: 10px 0 0 0;
+    font-weight: bold;
+    text-align: center;"> Performance of several models on MNIST using the same learning rate and batch size but different random seed. </figcaption>
+</figure>
+
+
 ## Installation
 
 Clone this git first.
